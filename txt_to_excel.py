@@ -9,7 +9,6 @@ def wos_txt_to_excel(input_txt_path, output_excel_path):
 
     print(f"正在读取文件: {input_txt_path} ...")
 
-    # 使用 'utf-8-sig' 可以自动处理文件开头的 BOM (Byte Order Mark) 字符
     with open(input_txt_path, 'r', encoding='utf-8-sig') as f:
         for line in f:
             # 去除行末的回车换行符，但保留行首的空格以判断是否为延续行
@@ -35,21 +34,19 @@ def wos_txt_to_excel(input_txt_path, output_excel_path):
                 current_tag = ""
                 continue
 
-            # 判断是否为多行延续的内容 (WOS中延续行以 3 个空格开头)
+            # 判断是否为多行延续的内容
             if line.startswith("   ") and current_tag:
                 # 遇到多行内容，使用换行符 '\n' 拼接，完美保留各字段下的独立内容（如多作者、多参考文献）
                 current_record[current_tag] += "\n" + line.strip()
 
-            # 判断是否为新的字段标签 (行首2个字符+1个空格，且前两个字符为字母或数字)
+            # 判断是否为新的字段标签
             elif len(line) >= 3 and line[2] == " " and line[0].isupper() and line[1].isalnum():
                 tag = line[:2]
                 value = line[3:]
                 current_tag = tag
                 # 记录该标签对应的内容
                 current_record[current_tag] = value
-
             else:
-                # 应对非常规换行的容错处理
                 if current_tag:
                     current_record[current_tag] += " " + line.strip()
 
@@ -60,7 +57,6 @@ def wos_txt_to_excel(input_txt_path, output_excel_path):
         print("未解析到任何数据，请检查 txt 文件格式！")
         return
 
-    # 重新排列列名，确保 'PT' 在第一列，'ER' 在最后一列
     cols = df.columns.tolist()
     if 'PT' in cols:
         cols.remove('PT')
@@ -69,7 +65,6 @@ def wos_txt_to_excel(input_txt_path, output_excel_path):
         cols.remove('ER')
         cols.append('ER')
 
-    # 按照整理好的列名重新生成 DataFrame
     df = df[cols]
 
     # 导出为 Excel 文件 (xlsx格式)
